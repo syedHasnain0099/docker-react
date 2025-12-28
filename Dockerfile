@@ -1,5 +1,5 @@
 # Build stage
-FROM node:22-alpine AS builder
+FROM node:18-alpine AS builder
 WORKDIR /app
 
 # Copy both package.json + lockfile for fast, deterministic installs
@@ -20,3 +20,4 @@ EXPOSE 80
 
 # ✅ Ensure nginx stays in foreground (container doesn't exit)
 CMD ["nginx", "-g", "daemon off;"]
+
