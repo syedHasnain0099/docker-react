@@ -1,0 +1,20 @@
+name: Docker React CI
+
+on:
+  push:
+    branches: ["master", "main"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -f Dockerfile.dev -t docker-react .
+
+      - name: Run tests
+        run: docker run -e CI=true docker-react npm test -- --coverage
