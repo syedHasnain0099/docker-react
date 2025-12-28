@@ -1,20 +1,55 @@
-name: Docker React CI
+name: Docker React CI + Deploy (Elastic Beanstalk)
 
 on:
   push:
-    branches: ["master", "main"]
+    branches: ["master"]
   pull_request:
+    branches: ["master"]
 
 jobs:
   test:
+    name: Build & Test (Docker)
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build Docker image
-        run: docker build -f Dockerfile.dev -t docker-react .
+      - name: Build Docker image (dev)
+        run: docker build -f Dockerfile.dev -t syedhasnain0099/docker-react .
 
       - name: Run tests
-        run: docker run -e CI=true docker-react npm test -- --coverage
+        run: docker run -e CI=true syedhasnain0099/docker-react npm test -- --coverage
+
+  deploy:
+    name: Deploy to Elastic Beanstalk
+    runs-on: ubuntu-latest
+    needs: test
+
+    # only deploy on direct pushes to master (not PRs)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create deployment package (zip)
+        run: |
+          zip -r deploy.zip . \
+            -x ".git/*" ".github/*" "node_modules/*"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-north-1
+
+      - name: Deploy to Elastic Beanstalk
+        uses: einaregilsson/beanstalk-deploy@v22
+        with:
+          region: eu-north-1
+          application_name: docker-react
+          environment_name: Docker-react-env
+          version_label: docker-react-${{ github.run_number }}-${{ github.sha }}
+          deployment_package: deploy.zip
