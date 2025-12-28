@@ -54,3 +54,4 @@ jobs:
           environment_name: Docker-react-env
           version_label: docker-react-${{ github.run_number }}-${{ github.sha }}
           deployment_package: deploy.zip
+          recovery_wait_time: 180
